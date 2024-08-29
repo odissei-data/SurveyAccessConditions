@@ -35,16 +35,16 @@ RawData <- read_ods(here("Data","SurveyDataAccessConditions_RawResults.ods"))
 #Removing the first two rows from the raw data file, because the variables actually only start in row 3 
 Data <- RawData[-c(1,2,3),]
 
-#As for this analysis we are only interested in the closed questions, we remove the rest of the columns
-Data <- Data[,-c(1,3,7,8,9,11,13,15,17,19,21,23,24,25,26,28,29,30),]
+#As for this analysis we are only interested in the closed questions, and Q1 (which can be recoded), we remove the rest of the columns.  
+Data <- Data[,-c(3,7,8,9,11,13,15,17,19,21,23,24,25,26,28,29,30),]
 
 # I create a separate dataframe with all the labels for me to refer to things if needed and before I rename my variables 
-Labels <- data.frame (q_text = t(Data[1,]),q_id = c("Q2", "Q3","Q4","Q5","Q9","Q10","Q11","Q12", "Q13","Q14", "Q15", "Q17"), q_shortname = c("Organisation", "Country", "ArchivedAtDANS", "ManageRestrictedData", "OtherThanResearch","Students", "Teaching", "LimitedIndividuals","Commercial","LimitedRegion","MotivationRequired","Costs"))
+Labels <- data.frame (q_text = t(Data[1,]),q_id = c("Q1", "Q2", "Q3","Q4","Q5","Q9","Q10","Q11","Q12", "Q13","Q14", "Q15", "Q17"), q_shortname = c("Position", "Organisation", "Country", "ArchivedAtDANS", "ManageRestrictedData", "OtherThanResearch","Students", "Teaching", "LimitedIndividuals","Commercial","LimitedRegion","MotivationRequired","Costs"))
 # I am adjusting the names of the rows to match the ones we will use for the Data
-row.names(Labels) <-c("Organisation", "Country", "ArchivedAtDANS", "ManageRestrictedData", "OtherThanResearch","Students", "Teaching", "LimitedIndividuals","Commercial","LimitedRegion","MotivationRequired","Costs")
+row.names(Labels) <-c("Position", "Organisation", "Country", "ArchivedAtDANS", "ManageRestrictedData", "OtherThanResearch","Students", "Teaching", "LimitedIndividuals","Commercial","LimitedRegion","MotivationRequired","Costs")
 
 #Rename the variables in my Data to the short names so it will be easier to refer to them 
-names(Data) <-c("Organisation", "Country", "ArchivedAtDANS", "ManageRestrictedData", "OtherThanResearch","Students", "Teaching", "LimitedIndividuals","Commercial","LimitedRegion","MotivationRequired","Costs")
+names(Data) <-c("Position", "Organisation", "Country", "ArchivedAtDANS", "ManageRestrictedData", "OtherThanResearch","Students", "Teaching", "LimitedIndividuals","Commercial","LimitedRegion","MotivationRequired","Costs")
 
 #From looking at the Data, we saw that in country, multiple spellings of "the Netherlands" were used and we want to ensure they are grouped together.
 Data <- Data %>% mutate(Country = recode(Country, 'Netherlands' = 'The Netherlands', 'the Netherlands' = 'The Netherlands', 'NL' =  'The Netherlands', 'Nederland' = 'The Netherlands', 'netherlands' = 'The Netherlands'))
@@ -57,27 +57,31 @@ Data <- Data %>% mutate(LimitedIndividuals = recode(LimitedIndividuals, 'It depe
 Data <- Data %>% mutate(Commercial = recode(Commercial, 'It depends (please elaborate below)' = 'Depends'))
 Data <- Data %>% mutate(LimitedRegion = recode(LimitedRegion, 'It depends (please elaborate below)' = 'Depends', 'Yes (please elaborate below - which region?)'='Yes'))
 
+#We also want to replace the values in "Positions" with the recoded values.
+#For this we load the csv file
+repQ1 <- read.csv(here("Data/RecodedData","Q1 - Recoding - Sheet1.csv"))
+Data$Position <-repQ1$Coded.Response
 
 ######## CREATING COUNTS AND PLOTS
 
-#Create counts for Q2, Q3 and Q4, ordered in descending order
-Res_Org2 <- Data %>% count(Organisation) %>% arrange(desc(n))
-
+#Create counts for Q1 Q2, Q3 and Q4, ordered in descending order
+Res_Org <- Data %>% count(Organisation) %>% arrange(desc(n))
+Res_Pos <- Data %>% count(Position) %>% arrange(desc(n))
 Res_Country <- Data %>% count(Country) %>% arrange(desc(n))
 Res_AtDANS <- Data %>% count(ArchivedAtDANS) %>% arrange(desc(n))
 
 #Create plots for all other closed questions 
-for (i in 5: ncol(Data)) {
+for (i in 6: ncol(Data)) {
 
   #because I wants able to figure out how to loop through assigning the variables based on i
-  if (i==5) {Input=Data$OtherThanResearch}
-  else if (i==6) {Input=Data$Students}
-  else if (i==7) {Input=Data$Teaching}
-  else if (i==8) {Input=Data$LimitedIndividuals}
-  else if (i==9) {Input=Data$Commercial}
-  else if (i==10) {Input=Data$LimitedRegion}
-  else if (i==11) {Input=Data$MotivationRequired}
-  else if (i==12) {Input=Data$Costs}
+  if (i==6) {Input=Data$OtherThanResearch}
+  else if (i==7) {Input=Data$Students}
+  else if (i==8) {Input=Data$Teaching}
+  else if (i==9) {Input=Data$LimitedIndividuals}
+  else if (i==10) {Input=Data$Commercial}
+  else if (i==11) {Input=Data$LimitedRegion}
+  else if (i==12) {Input=Data$MotivationRequired}
+  else if (i==13) {Input=Data$Costs}
 
   # #If you want to test the output with just one value, you can use
   # i=6
